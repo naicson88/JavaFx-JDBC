@@ -1,16 +1,30 @@
 package gui;
 
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.ResourceBundle;
 
+import db.DbException;
+import gui.listeners.DataChangeListener;
+import gui.util.Alerts;
 import gui.util.Constrains;
+import gui.util.Utils;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.TextField;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
+import model.entities.Department;
+import model.service.DepartmentService;
 
-public class DepartmentFormController implements Initializable{
+public class DepartmentFormController implements Initializable {
+
+	private Department entity;
+	private DepartmentService service;
+	private List<DataChangeListener> dataChangeListener = new ArrayList<>();
 
 	@FXML
 	private TextField txtId;
@@ -22,27 +36,79 @@ public class DepartmentFormController implements Initializable{
 	private Button btnSave;
 	@FXML
 	private Button btnCancel;
+
+	public void setDepartment(Department entity) {
+		this.entity = entity;
+	}
+
+	public void setDepartmentService(DepartmentService service) {
+		this.service = service;
+	}
+
+	public void subscribeDataChangeListener(DataChangeListener listeners) {
+		dataChangeListener.add(listeners);
+	}	
 	
 	@FXML
-	public void onBtnSave() {
-		System.out.println("Botao 2");
+	public void onBtnSave(ActionEvent event) {
+		if (entity == null) {
+			throw new IllegalStateException("Entity was null");
+		}
+		
+		if (service == null) {
+			throw new IllegalStateException("Service was null");
+		}
+		
+		try {
+			entity = getFormData();
+			service.saveOrUpdate(entity);
+			notifyDataChangeListeners();
+			Utils.currentStage(event).close();
+		} catch (DbException e) {
+			Alerts.showAlert("Error saving object", null, e.getMessage(), AlertType.ERROR);
+		}
+		
+		
 	}
-	
+
+	private void notifyDataChangeListeners() {
+		for (DataChangeListener listener : dataChangeListener) {
+			listener.onDataChanged();
+		}
+		
+	}
+
+	private Department getFormData() {
+		Department obj = new Department();
+		obj.setId(Utils.tryParseToInt(txtId.getText()));
+		obj.setName(txtName.getText());
+
+		return obj;
+	}
+
 	@FXML
-	public void onBtnCancel() {
-		System.out.println("Botao C");
+	public void onBtnCancel(ActionEvent event) {
+		Utils.currentStage(event).close();
 	}
-	
+
 	public void initializeNodes() {
 		Constrains.setTextFieldMaxLength(txtName, 30);
 		Constrains.setTextFielInteger(txtId);
 	}
 
-	
+	public void updadeFormData() {
+		if (entity == null) {
+			throw new IllegalStateException("Entity was null");
+		}
+
+		txtId.setText(String.valueOf(entity.getId()));
+		txtName.setText(entity.getName());
+	}
+
 	@Override
 	public void initialize(URL url, ResourceBundle rd) {
 		// TODO Auto-generated method stub
-		
+
 	}
-	
+
 }
