@@ -151,7 +151,7 @@ PreparedStatement st = null;
 		obj.setName(rs.getString("Name"));
 		obj.setEmail(rs.getString("Email"));
 		obj.setBaseSalary(rs.getDouble("BaseSalary"));
-		obj.setBithDate(rs.getDate("BirthDate"));
+		obj.setBithDate(new java.util.Date(rs.getTimestamp("BirthDate").getTime()));
 		obj.setDepartament(dep);
 		
 		return obj;
